@@ -250,7 +250,7 @@ class SearchOverlay(ctk.CTk):
         # 2. Calculate Center
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        window_width = 550
+        window_width = 400
         window_height = 200 
         x_pos = (screen_width // 2) - (window_width // 2)
         y_pos = (screen_height // 3)
@@ -520,4 +520,5 @@ if __name__ == "__main__":
     if app.tray_icon_manager:
         app.tray_icon_manager.stop()
         
+
     print("Application terminated cleanly.")
