@@ -9,7 +9,9 @@ from difflib import get_close_matches
 import time 
 import threading
 import tkinter.messagebox as tk_messagebox
-import sys 
+import sys
+import win32process
+import psutil
 
 # Windows-specific libraries for shortcut creation and tray icon
 import win32com.client
@@ -20,7 +22,7 @@ from PIL import Image
 # --- CONFIGURATION ---
 HOTKEY = 'ctrl + f'
 HOTKEY_ESC = 'esc'
-TARGET_WINDOW_KEYWORD = "ARC Raiders" 
+TARGET_EXE_NAME = "PioneerGame.exe" 
 APP_TITLE = "ARC Raiders Market"
 JSON_FILENAME = "ARC_Raiders_Market_Database.json" 
 ICON_FILENAME = "app_icon.ico" 
@@ -408,16 +410,20 @@ class SearchOverlay(ctk.CTk):
     def done_clicked(self):
         self.hide_overlay()
         
-        target_keyword = TARGET_WINDOW_KEYWORD.upper()
-        
         start_time = time.time() 
         print(f"\n[DONE] Starting SetForegroundWindow operation at {start_time}")
 
         def callback(hwnd, extra):
-            window_title = win32gui.GetWindowText(hwnd)
-            if target_keyword in window_title.upper():
-                win32gui.SetForegroundWindow(hwnd)
-                raise Exception("Window found and focused")
+            # Check if the window is visible to avoid background processes
+            if win32gui.IsWindowVisible(hwnd):
+                try:
+                    _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                    process = psutil.Process(pid)
+                    if process.name().lower() == TARGET_EXE_NAME.lower():
+                        win32gui.SetForegroundWindow(hwnd)
+                        raise Exception("Window found and focused")
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    pass
 
         try:
             win32gui.EnumWindows(callback, None)
@@ -460,29 +466,31 @@ class SearchOverlay(ctk.CTk):
 
 # --- SYSTEM LOGIC ---
 
-def get_active_window_title():
-    """Returns the title of the window currently in the foreground."""
+def get_active_window_process_name():
+    """Returns the executable name of the window currently in the foreground."""
     try:
         hwnd = win32gui.GetForegroundWindow()
-        return win32gui.GetWindowText(hwnd)
+        # Get the Thread Process ID associated with the window handle
+        _, pid = win32process.GetWindowThreadProcessId(hwnd)
+        # Get the process object
+        process = psutil.Process(pid)
+        return process.name()
     except Exception:
-       return ""
+        return ""
 
 def clean_string(text):
     """Removes non-alphanumeric characters."""
     return re.sub(r'[^a-zA-Z0-9]', '', text).upper()
 
 def on_hotkey():
-    raw_title = get_active_window_title()
-    cleaned_title = clean_string(raw_title)
-    target_clean = clean_string(TARGET_WINDOW_KEYWORD)
+    current_exe = get_active_window_process_name()
     
-    # Check if the target game window is active
-    if cleaned_title.startswith(target_clean):
-        if len(target_clean) >= 3: 
-            app.after(0, app.show_overlay)
+    # Check if the active window's executable matches the target
+    if current_exe.lower() == TARGET_EXE_NAME.lower():
+        app.after(0, app.show_overlay)
     else:
         # Ignore if not the target window
+        # print(f"Ignored: Active window is {current_exe}") # Debugging line
         pass
 
 # Start the hotkey listener
