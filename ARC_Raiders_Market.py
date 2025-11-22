@@ -27,7 +27,7 @@ ICON_DATA = "AAABAAQAEBAAAAEAIABoBAAARgAAACAgAAABACAAqBAAAK4EAAAwMAAAAQAgAKglAAB
 # --- CONFIGURATION ---
 HOTKEY = 'ctrl + f'
 HOTKEY_ESC = 'esc'
-TARGET_EXE_NAME = "Firefox.exe" 
+TARGET_EXE_NAME = "PioneerGame.exe" 
 APP_TITLE = "ARC Raiders Market"
 JSON_FILENAME = "ARC_Raiders_Market_Database.json" 
 ICON_FILENAME = "app_icon.ico" 
